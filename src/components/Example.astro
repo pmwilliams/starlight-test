@@ -1,0 +1,194 @@
+---
+import { FileTree, Code, Tabs, TabItem, Icon } from '@astrojs/starlight/components';
+
+const viewFile = 'htto://localhost:4321/examples/bob.tsx'
+const imports = import.meta.glob('/public/examples/**/*', { query: '?raw', import: 'default'})
+const files = Object.keys(imports)
+---
+
+<script>
+
+  function mouseEnter(event: Event) {
+    (event.target as HTMLElement)?.classList.add('hovered');
+  }
+
+  function mouseLeave(event: Event) {
+    (event.target as HTMLElement)?.classList.remove('hovered');
+  }
+
+  function click(event: Event) {
+    const index = (event.currentTarget as HTMLElement).getAttribute('data-index');
+    const files = document.querySelectorAll('.code');
+    files.forEach(file => file.classList.remove('visible'));
+    const file = document.querySelector(`.file-${index}`);
+    file?.classList.add('visible');
+  }
+
+  const fileListItems = document.querySelectorAll('li.file');
+
+  fileListItems.forEach((fileListItem) => {
+    fileListItem.addEventListener('mouseenter', mouseEnter);
+    fileListItem.addEventListener('mouseleave', mouseLeave);
+    fileListItem.addEventListener('click', click);
+  });
+
+</script>
+
+<style>
+
+  .viewer {
+    display: flex;
+    height: 400px;
+    border: 1px solid var(--sl-color-gray-5);
+    border-top: none;
+  }
+
+  .viewer .code-container {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    background-color: var(--sl-color-gray-6);
+  }
+
+  .viewer .code-container .code {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    margin: 0;
+    height: 400px;
+  }
+
+  .viewer .code-container .code.visible {
+    display: block;
+  }
+
+  .files {
+    width: 180px;
+    min-height: 100%;
+    border-rigt: 1px solid var(--sl-color-gray-5);
+  }
+
+  .files:first-child {
+    min-height: 100%;
+    height: 100%;
+  }
+
+  .hovered {
+    background-color: var(--sl-color-gray-6);
+  }
+
+  .file-list {
+    margin: 0;
+  }
+
+  .file-list li {
+    margin: 0;
+    padding: 0 12px;
+    cursor: pointer;
+  }
+
+  .iframe {
+    border: none;
+    min-height: 400px;
+    width: 100%;
+    border: 1px solid var(--sl-color-gray-5);
+  }
+
+  .toolbar {
+    position: absolute;
+    display: flex;
+    right: 0;
+    gap: 0.75rem;
+  }
+
+  .container {
+    position: relative;
+  }
+
+</style>
+
+<style is:global>
+
+  .container .tablist-wrapper~[role="tabpanel"] {
+    margin-top: 0;
+  }
+
+  .viewer .plain {
+    max-height: 100% !important;
+    height: 100% !important;
+  }
+
+  .viewer .plain figure {
+    max-height: 100% !important;
+    height: 100% !important;
+  }
+  
+  .viewer .plain pre {
+    background-color: rgba(0, 0, 0, 0) !important;
+    border: none !important;
+    max-height: 100% !important;
+  }
+
+  .viewer starlight-file-tree {
+    background-color: rgba(0, 0, 0, 0) !important;
+    border: none !important;
+    padding: 12px 0 !important;
+  }
+
+</style>
+
+<h1>Example</h1>
+
+<div class="container">
+  <div class="toolbar">
+    <a href="https://codesandbox.io/p/sandbox/github/pmwilliams/starlight-test/tree/main/public/examples" target="_blank">
+      <svg fill="currentColor" width="1.5rem" role="img" xmlns="http://www.w3.org/2000/svg">
+        <title>CodeSandbox icon</title>
+        <path d="M2 6l10.455-6L22.91 6 23 17.95 12.455 24 2 18V6zm2.088 2.481v4.757l3.345 1.86v3.516l3.972 2.296v-8.272L4.088 8.481zm16.739 0l-7.317 4.157v8.272l3.972-2.296V15.1l3.345-1.861V8.48zM5.134 6.601l7.303 4.144 7.32-4.18-3.871-2.197-3.41 1.945-3.43-1.968L5.133 6.6z"/>
+      </svg>
+    </a>
+    <a href="/starlight-test/examples/index.html" target="_blank"><Icon name="external" size="1.5rem"/></a>
+  </div>
+  <Tabs>
+    <TabItem label="Demo" icon="rocket">
+      <iframe class="iframe" id="runner" src='/starlight-test/examples/index.html' />    
+    </TabItem>
+
+    <TabItem label="Code" icon="seti:html">
+      <div class="viewer">
+        <div class="files">
+          <FileTree>
+              <ul class="file-list">
+                {files.map((key, index) => <li class="file" data-index={index}>{key.substr(17)}</li>)}
+              </ul>
+          </FileTree>
+        </div>
+
+        <div class="code-container">
+          {files.map(async (key, index) => 
+            {
+              const contents = await imports[key]() as string;
+              const lang = key.substr(key.lastIndexOf('.') + 1);
+              let style = `code file-${index}`;
+              if (index === 0) {
+                style = `${style} visible`;
+              }
+              return (
+                <div class={style}>
+                  { contents.trim() && <Code class="plain" lang={lang} code={contents} /> }
+                </div>
+              )
+            }
+          )}
+        </div>
+      </div>    
+    </TabItem>
+  </Tabs>
+<div>
+
+
